@@ -1,0 +1,6 @@
+agentic_rag/__pycache__
+examples/__pycache__
+.claude
+.codeboarding
+.env
+CLAUDE.md
