@@ -25,6 +25,57 @@ which ones to consult.
 
 A small reusable core, with four capability classes built on top of it.
 
+```mermaid
+flowchart TB
+    %% ---- Entry points ----
+    User(["👤 CLI · examples · your code"]):::entry
+
+    %% ---- Configuration ----
+    Config["<b>RAGConfig</b><br/><code>config.py</code><br/>models · embeddings · env"]:::config
+
+    %% ---- Core pipeline ----
+    subgraph Core["🧩 Reusable core"]
+        direction TB
+        PDF([📄 PDF documents]):::data
+        Indexer["<b>DocumentIndexer</b><br/><code>indexing.py</code><br/>PDF → nodes → vector & summary indexes"]:::core
+        Tools["<b>DocumentTools</b> — the hub<br/><code>document_tools.py</code><br/>vector_tool + summary_tool"]:::hub
+        Runtime["<b>WorkflowAgent</b><br/><code>agent_runtime.py</code><br/>sync facade over async agent"]:::core
+        PDF --> Indexer --> Tools
+    end
+
+    %% ---- Capability classes L1..L4 ----
+    subgraph Caps["🚀 Capability classes"]
+        direction LR
+        Router["<b>RouterEngine</b> · L1<br/>summary vs. vector routing"]:::cap
+        ToolCall["<b>ToolCaller</b> · L2<br/>single tool-selection call"]:::cap
+        Reason["<b>ReasoningAgent</b> · L3<br/>multi-step loop + memory"]:::cap
+        Multi["<b>MultiDocumentAgent</b> · L4<br/>many docs + tool retrieval"]:::cap
+        Router --> ToolCall --> Reason --> Multi
+    end
+
+    %% ---- Wiring ----
+    User ==> Router & ToolCall & Reason & Multi
+    Config -. configures .-> Core
+    Config -. LLM .-> Caps
+
+    Indexer --> Router
+    Tools --> ToolCall & Reason & Multi
+    Runtime --> Reason & Multi
+
+    %% ---- Styling ----
+    classDef entry  fill:#1f2937,stroke:#111827,color:#f9fafb,font-weight:bold
+    classDef config fill:#fde68a,stroke:#b45309,color:#78350f
+    classDef core   fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
+    classDef hub    fill:#bfdbfe,stroke:#1d4ed8,color:#1e3a8a,font-weight:bold
+    classDef cap    fill:#dcfce7,stroke:#16a34a,color:#14532d
+    classDef data   fill:#f3f4f6,stroke:#9ca3af,color:#374151
+```
+
+> **How to read it:** documents flow up through the core (`DocumentIndexer` →
+> `DocumentTools`), `RAGConfig` feeds models to everything, and the four
+> capability classes build on one another left→right (L1 → L4), all reachable
+> from the CLI or your own code.
+
 ```
 agentic_rag/
   config.py                RAGConfig + environment loading — the only place models are chosen
